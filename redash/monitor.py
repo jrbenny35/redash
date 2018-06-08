@@ -1,4 +1,3 @@
-import json
 from redash import redis_connection, models, __version__, settings
 
 
@@ -18,7 +17,6 @@ def get_status():
     status['workers'] = []
 
     status['manager'] = redis_connection.hgetall('redash:status')
-    status['data_sources'] = json.loads(redis_connection.get('data_sources:health') or '{}')
 
     queues = {}
     for ds in models.DataSource.query:
