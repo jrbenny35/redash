@@ -103,8 +103,8 @@ jobs:
       - attach_workspace:
           at: .
       - run:
-          name: Build and deploy
-          command: bin/deploy "$CIRCLE_BRANCH"
+          name: Build
+          command: bin/pack "$CIRCLE_BRANCH"
   build-release: # build for tags
     docker:
       - image: circleci/node:6
@@ -116,8 +116,10 @@ jobs:
           name: Tag deploy
           command: |
             set -x
-            ./bin/deploy "$CIRCLE_TAG"
-            ./bin/alias "$CIRCLE_TAG" "latest"
+            bin/pack "$CIRCLE_TAG"
+            docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
+            docker build -t redash/redash:$(./manage.py version | sed -e "s/\+/./") .
+            docker push redash/redash:$(./manage.py version | sed -e "s/\+/./")
 workflows:
   version: 2
   build_test_deploy_release:
@@ -137,7 +139,7 @@ workflows:
              - unit_tests
            filters:
              tags:
-               only: /^m[0-9]+(\.[0-9]+)?$/
+               only: /v[0-9]+(\.[0-9\-a-z]+)*/
              branches:
                ignore: /.*/
       - integration_tests:
